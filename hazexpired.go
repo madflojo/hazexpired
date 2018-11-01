@@ -21,7 +21,7 @@ var dialer = &net.Dialer{
 }
 
 func FetchChain(address string) ([]*CertificateStatus, error) {
-  conf := &tls.Config{InsecureSkipVerify: true}
+	conf := &tls.Config{InsecureSkipVerify: true}
 	c, err := tls.DialWithDialer(dialer, "tcp", address, conf)
 	if err != nil {
 		return nil, fmt.Errorf("Could not establish connection to outbound address %s - %s", address, err)
