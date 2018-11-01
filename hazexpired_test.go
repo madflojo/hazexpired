@@ -69,7 +69,6 @@ func startListener(cert, key []byte) (net.Listener, error) {
 	go func() {
 		for {
 			conn, err := l.Accept()
-			defer conn.Close()
 			if err != nil {
 				return
 			}
@@ -178,6 +177,119 @@ func TestHappyPathGoodCert(t *testing.T) {
 		}
 		if v {
 			t.Errorf("Unexpected result when testing ExpiredsBeforeDate on happy path expected false got %+v", v)
+		}
+	})
+}
+
+// Test with a valid Address/Port and expired certificate
+func TestHappyPathExpiredCert(t *testing.T) {
+	// Create cert/key pair
+	cert, key, err := genCerts(time.Now().Truncate(24 * time.Hour))
+	if err != nil {
+		t.Logf("Unable to generate test certificates - %s", err)
+		t.FailNow()
+	}
+
+	// Start Listener
+	l, err := startListener(cert, key)
+	if err != nil {
+		t.Logf("%s", err)
+		t.FailNow()
+	}
+	time.Sleep(30 * time.Millisecond)
+	defer l.Close()
+
+	// Start tests
+	t.Run("FetchChain", func(t *testing.T) {
+		var chain []*CertificateStatus
+		chain, err := FetchChain("127.0.0.1:9000")
+		if err != nil {
+			t.Errorf("Unexpected failure when fetching Certificate Chain - %s", err)
+		}
+		found := false
+		for _, cert := range chain {
+			if cert.ExpiredNow == true {
+				found = true
+			}
+		}
+		if found == false {
+			t.Errorf("Could not find an expected expired certificate")
+		}
+	})
+
+	t.Run("Expired", func(t *testing.T) {
+		var v bool
+		v, err := Expired("127.0.0.1:9000")
+		if err != nil {
+			t.Errorf("Unexpected failure when testing for Expired certificates - %s", err)
+		}
+		if v == false {
+			t.Errorf("Unexpected result when testing Expired on happy path expected true got %+v", v)
+		}
+	})
+
+	t.Run("ExiresWithinDays", func(t *testing.T) {
+		var v bool
+		v, err := ExpiresWithinDays("127.0.0.1:9000", 30)
+		if err != nil {
+			t.Errorf("Unexpected failure when calling ExpiresWithinDays - %s", err)
+		}
+		if v == false {
+			t.Errorf("Unexpected result when testing ExpiresWithinDays on happy path expected true got %+v", v)
+		}
+	})
+
+	t.Run("ExpiresBeforeDate", func(t *testing.T) {
+		var v bool
+		v, err := ExpiresBeforeDate("127.0.0.1:9000", time.Now())
+		if err != nil {
+			t.Errorf("Unexpected failure when calling ExpiresBeforeDate - %s", err)
+		}
+		if v == false {
+			t.Errorf("Unexpected result when testing ExpiredsBeforeDate on happy path expected true got %+v", v)
+		}
+	})
+}
+
+// Test a certificate that is expiring soon
+func TestExpiringCert(t *testing.T) {
+	// Create cert/key pair
+	cert, key, err := genCerts(time.Now().Add(360 * time.Hour))
+	if err != nil {
+		t.Logf("Unable to generate test certificates - %s", err)
+		t.FailNow()
+	}
+
+	// Start Listener
+	l, err := startListener(cert, key)
+	if err != nil {
+		t.Logf("%s", err)
+		t.FailNow()
+	}
+	time.Sleep(30 * time.Millisecond)
+	defer l.Close()
+
+	// Test if it expires within x days
+	t.Run("ExpiresWithin30Days", func(t *testing.T) {
+		var v bool
+		v, err := ExpiresWithinDays("127.0.0.1:9000", 30)
+		if err != nil {
+			t.Errorf("Unexpected failure when calling ExpiresWithinDays - %s", err)
+		}
+		if v == false {
+			t.Errorf("Unexpected result when testing ExpiresWithinDays with a cert that expires in 15 days, expected true and got %+v", v)
+		}
+	})
+
+	// Test if it expires by x date
+	t.Run("ExpiresBeforeDate", func(t *testing.T) {
+		var v bool
+		v, err := ExpiresBeforeDate("127.0.0.1:9000", time.Now().Add(720*time.Hour))
+		if err != nil {
+			t.Errorf("Unexpected failure when calling ExpiresBeforeDate - %s", err)
+		}
+		if v == false {
+			t.Errorf("Unexpected result when testing ExpiredsBeforeDate with a cert that expires in 15 days, expected true got %+v", v)
 		}
 	})
 }
