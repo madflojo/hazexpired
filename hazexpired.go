@@ -84,7 +84,7 @@ func Expired(address string) (bool, error) {
 	return false, nil
 }
 
-// ExpiresWithinDates will return true if a certificate within the remote system's certificate chain expires within the specified number of days.
+// ExpiresWithinDays will return true if a certificate within the remote system's certificate chain expires within the specified number of days.
 func ExpiresWithinDays(address string, days int) (bool, error) {
 	chain, err := FetchChain(address)
 	if err != nil {
