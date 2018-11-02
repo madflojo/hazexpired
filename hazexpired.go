@@ -1,3 +1,14 @@
+// Package hazexpired provides simple functions that determine when a remote system's SSL/TLS certificates expire.
+//
+//    import hazexpired
+//
+//    check, err := hazexpired.Expired("example.com:443")
+//    if err != nil {
+//      // do something
+//    }
+//    if check {
+//      // do something else
+//    }
 package hazexpired
 
 import (
@@ -8,18 +19,29 @@ import (
 	"time"
 )
 
+// CertificateStatus represents the status and metadata of a Certificate within the remote system's certificate chain.
 type CertificateStatus struct {
-	ExpiredNow     bool
-	ExpiresInDays  int
+	// ExpiredNow indicates if this certificate is expired currently
+	ExpiredNow bool
+
+	// ExpiresInDays is an numeric count of days this certificate will expire
+	ExpiresInDays int
+
+	// ExpirationDate is the datetime the certificate will expire
 	ExpirationDate time.Time
-	Signature      []byte
-	SerialNumber   *big.Int
+
+	// Signature is the certificate signature
+	Signature []byte
+
+	// SerialNumber is the Serial Number from the certificate
+	SerialNumber *big.Int
 }
 
 var dialer = &net.Dialer{
 	Timeout: 3 * time.Second,
 }
 
+// FetchChain will fetch a remote system's certificate chain and return a CertificateStatus object for each certificate in the chain.
 func FetchChain(address string) ([]*CertificateStatus, error) {
 	conf := &tls.Config{InsecureSkipVerify: true}
 	c, err := tls.DialWithDialer(dialer, "tcp", address, conf)
@@ -48,6 +70,7 @@ func FetchChain(address string) ([]*CertificateStatus, error) {
 	return chain, nil
 }
 
+// Expired indicates whether there is an expired certificate within the remote system's certificate chain.
 func Expired(address string) (bool, error) {
 	chain, err := FetchChain(address)
 	if err != nil {
@@ -61,6 +84,7 @@ func Expired(address string) (bool, error) {
 	return false, nil
 }
 
+// ExpiresWithinDates will return true if a certificate within the remote system's certificate chain expires within the specified number of days.
 func ExpiresWithinDays(address string, days int) (bool, error) {
 	chain, err := FetchChain(address)
 	if err != nil {
@@ -74,6 +98,7 @@ func ExpiresWithinDays(address string, days int) (bool, error) {
 	return false, nil
 }
 
+// ExpiresBeforeDate will return true if a certificate within the remote system's certificate chain expires before the specified date.
 func ExpiresBeforeDate(address string, t time.Time) (bool, error) {
 	chain, err := FetchChain(address)
 	if err != nil {
