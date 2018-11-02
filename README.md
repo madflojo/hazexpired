@@ -19,4 +19,4 @@ if check {
 }
 ```
 
-For more detailed used please consult the [GoDocs](https://godoc.org/github.com/madflojo/hazexpired)
+For more detailed usage please consult the [GoDocs](https://godoc.org/github.com/madflojo/hazexpired)
