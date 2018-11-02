@@ -2,6 +2,8 @@
 
 HazExpired is a Go package that provides simple functions to check if a remote system has expired certificates within it's chain.
 
+[![Build Status](https://travis-ci.org/madflojo/hazexpired.svg?branch=master)](https://travis-ci.org/madflojo/hazexpired)
+
 ## Usage
 
 ```go
