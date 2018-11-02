@@ -18,3 +18,5 @@ if check {
   // do something because the certificate is expired
 }
 ```
+
+For more detailed used please consult the [GoDocs](https://godoc.org/github.com/madflojo/hazexpired)
